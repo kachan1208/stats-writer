@@ -22,8 +22,10 @@ func (t *StatsRepo) UpdateCounter(counter *model.Counter) error {
 		SET count = count + ?
 		WHERE 
 			account_id = ?
-			AND action_id = ?`,
+			AND action_id = ?
+			AND created_at = ?`,
 		counter.Count,
 		counter.AccountID,
-		counter.ActionID).Exec()
+		counter.ActionID,
+		counter.CreatedAt).Exec()
 }

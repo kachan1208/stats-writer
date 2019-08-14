@@ -1,15 +1,18 @@
 package app
 
 import (
+	"encoding/json"
+
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/nats-io/stan.go"
 
 	"github.com/kachan1208/statsWriter/src/dao"
+	"github.com/kachan1208/statsWriter/src/model"
 )
 
 type MsgHandler interface {
-	process(*stan.Msg, *dao.StatsRepo) error
+	process(string, []byte, *dao.StatsRepo) error
 }
 
 type Service struct {
@@ -42,9 +45,17 @@ func (s *Service) Run() {
 }
 
 func (s *Service) handle(m *stan.Msg) {
-	var err error
-	if h, ok := s.msgHandlers[m.Subject]; ok {
-		err = h.process(m, s.stats)
+	var (
+		err error
+		msg model.Message
+	)
+	err = json.Unmarshal(m.Data, &msg)
+	if err != nil {
+		level.Error(s.log).Log(err)
+	}
+
+	if h, ok := s.msgHandlers[msg.Subject]; ok {
+		err = h.process(msg.AccountID, msg.Body, s.stats)
 	} else {
 		level.Error(s.log).Log("err", "Handler for this type is not registered %s", m.Subject)
 	}

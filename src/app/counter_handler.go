@@ -3,8 +3,6 @@ package app
 import (
 	"encoding/json"
 
-	"github.com/nats-io/stan.go"
-
 	"github.com/kachan1208/statsWriter/src/dao"
 	"github.com/kachan1208/statsWriter/src/model"
 )
@@ -15,12 +13,14 @@ var (
 	counter = counterHandler{}
 )
 
-func (c counterHandler) process(msg *stan.Msg, repo *dao.StatsRepo) error {
+func (c counterHandler) process(accID string, msg []byte, repo *dao.StatsRepo) error {
 	var counter model.Counter
-	err := json.Unmarshal(msg.Data, &counter)
+	err := json.Unmarshal(msg, &counter)
 	if err != nil {
 		return err
 	}
+
+	counter.AccountID = accID
 
 	return repo.UpdateCounter(&counter)
 }
